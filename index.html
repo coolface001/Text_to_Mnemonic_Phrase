@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <title>文字轉以太坊錢包</title>
+  <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js"></script>
+</head>
+<body>
+  <h2>輸入一句話產生錢包（Ethereum）</h2>
+  <input type="text" id="input" placeholder="例如：一隻會寫程式的貓" size="40">
+  <button onclick="generate()">產生</button>
+  <pre id="output"></pre>
+
+  <script>
+    function generate() {
+      const text = document.getElementById("input").value.trim();
+      if (!text) return alert("請輸入內容");
+
+      const hash = ethers.utils.id(text); // 把文字轉成 32bytes hash
+      const wallet = new ethers.Wallet(hash); // 用 hash 當私鑰生成錢包
+
+      document.getElementById("output").textContent =
+        `地址: ${wallet.address}\n私鑰: ${wallet.privateKey}`;
+    }
+  </script>
+</body>
+</html>
