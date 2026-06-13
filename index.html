@@ -1,0 +1,653 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>极简安全助记词生成器</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #09090b;
+            --card-bg: rgba(20, 20, 23, 0.6);
+            --border-color: rgba(255, 255, 255, 0.08);
+            --text-primary: #f4f4f5;
+            --text-secondary: #a1a1aa;
+            --text-muted: #52525b;
+            --accent-color: #ffffff;
+            --accent-text: #000000;
+            --danger-color: #ef4444;
+            --font-family: 'Outfit', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-primary);
+            font-family: var(--font-family);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            overflow-x: hidden;
+            background-image: 
+                radial-gradient(circle at 10% 20%, rgba(255, 255, 255, 0.03) 0%, transparent 40%),
+                radial-gradient(circle at 90% 80%, rgba(255, 255, 255, 0.02) 0%, transparent 40%);
+        }
+
+        .container {
+            width: 100%;
+            max-width: 440px;
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 24px;
+            padding: 28px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            animation: fadeIn 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(15px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        header {
+            margin-bottom: 24px;
+            text-align: center;
+        }
+
+        h1 {
+            font-size: 22px;
+            font-weight: 500;
+            letter-spacing: -0.5px;
+            color: var(--text-primary);
+            margin-bottom: 6px;
+        }
+
+        .subtitle {
+            font-size: 13px;
+            color: var(--text-secondary);
+            font-weight: 300;
+        }
+
+        .section-title {
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            color: var(--text-muted);
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+        }
+
+        textarea {
+            width: 100%;
+            height: 90px;
+            background: rgba(0, 0, 0, 0.2);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 14px;
+            color: var(--text-primary);
+            font-family: inherit;
+            font-size: 15px;
+            resize: none;
+            outline: none;
+            transition: all 0.3s ease;
+        }
+
+        textarea:focus {
+            border-color: rgba(255, 255, 255, 0.2);
+            background: rgba(0, 0, 0, 0.3);
+            box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.05);
+        }
+
+        .btn-row {
+            display: grid;
+            grid-template-columns: 2.2fr 1fr;
+            gap: 12px;
+            margin-bottom: 24px;
+        }
+
+        button {
+            border: none;
+            border-radius: 12px;
+            padding: 14px;
+            font-size: 14px;
+            font-weight: 500;
+            font-family: inherit;
+            cursor: pointer;
+            transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        button:active {
+            transform: scale(0.97);
+        }
+
+        .btn-primary {
+            background: var(--accent-color);
+            color: var(--accent-text);
+        }
+
+        .btn-primary:hover {
+            opacity: 0.92;
+        }
+
+        .btn-danger {
+            background: rgba(239, 68, 68, 0.1);
+            color: var(--danger-color);
+            border: 1px solid rgba(239, 68, 68, 0.2);
+        }
+
+        .btn-danger:hover {
+            background: rgba(239, 68, 68, 0.15);
+        }
+
+        .mnemonic-group {
+            margin-top: 16px;
+            display: block; /* Always displayed to maintain layout integrity */
+        }
+
+        .mnemonic-box {
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px dashed var(--border-color);
+            border-radius: 14px;
+            padding: 18px;
+            margin-bottom: 16px;
+            font-family: inherit;
+            font-size: 15px;
+            line-height: 1.8;
+            color: var(--text-primary);
+            letter-spacing: 0.3px;
+            height: 140px; /* Fixed height to prevent mobile keyboard / height jumps */
+            overflow-y: auto;
+            word-spacing: 6px;
+            user-select: text;
+            text-align: center;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+        }
+
+        .mnemonic-box.empty {
+            color: var(--text-muted);
+            font-size: 13px;
+            font-style: italic;
+            border-style: dashed;
+            background: rgba(255, 255, 255, 0.01);
+        }
+
+        button:disabled {
+            opacity: 0.3;
+            pointer-events: none;
+            cursor: not-allowed;
+        }
+
+        .security-badge {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            font-size: 11px;
+            color: var(--text-muted);
+            margin-top: 24px;
+            font-weight: 300;
+        }
+
+        .security-badge svg {
+            width: 12px;
+            height: 12px;
+            fill: currentColor;
+        }
+
+        .toast {
+            position: fixed;
+            bottom: 32px;
+            left: 50%;
+            transform: translateX(-50%) translateY(100px);
+            background: rgba(255, 255, 255, 0.95);
+            color: #000;
+            padding: 12px 24px;
+            border-radius: 30px;
+            font-size: 13px;
+            font-weight: 500;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+            transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+            z-index: 100;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            white-space: nowrap;
+        }
+
+        .toast.show {
+            transform: translateX(-50%) translateY(0);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>助记词生成器</h1>
+            <div class="subtitle">安全本地转换 • 阅后即焚</div>
+        </header>
+
+        <div class="input-group">
+            <div class="section-title">输入字符 / 文本</div>
+            <textarea id="inputText" placeholder="输入任意文本、密码或短句..."></textarea>
+        </div>
+
+        <div class="btn-row">
+            <button class="btn-primary" id="btnGenerate">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 2v6h-6M3 12a9 9 0 0 1 15-6.7L21 8M3 22v-6h6M21 12a9 9 0 0 1-15 6.7L3 16"/></svg>
+                生成助记词
+            </button>
+            <button class="btn-danger" id="btnClear">
+                清除
+            </button>
+        </div>
+
+        <div class="mnemonic-group" id="mnemonicGroup">
+            <div class="section-title">生成的 24 个助记词</div>
+            <div class="mnemonic-box empty" id="mnemonicText">等待生成助记词...</div>
+            <button class="btn-primary" id="btnCopy" style="width: 100%;" disabled>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                复制助记词
+            </button>
+        </div>
+
+        <div class="security-badge">
+            <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg>
+            100% 离线安全 • 生成/复制即销毁原数据
+        </div>
+    </div>
+
+    <div class="toast" id="toast">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+        <span id="toastMsg">已复制并销毁显示！</span>
+    </div>
+
+    <script>
+        const BIP39_WORDS = [
+    "abandon", "ability", "able", "about", "above", "absent", "absorb", "abstract",
+    "absurd", "abuse", "access", "accident", "account", "accuse", "achieve", "acid",
+    "acoustic", "acquire", "across", "act", "action", "actor", "actress", "actual",
+    "adapt", "add", "addict", "address", "adjust", "admit", "adult", "advance",
+    "advice", "aerobic", "affair", "afford", "afraid", "again", "age", "agent",
+    "agree", "ahead", "aim", "air", "airport", "aisle", "alarm", "album",
+    "alcohol", "alert", "alien", "all", "alley", "allow", "almost", "alone",
+    "alpha", "already", "also", "alter", "always", "amateur", "amazing", "among",
+    "amount", "amused", "analyst", "anchor", "ancient", "anger", "angle", "angry",
+    "animal", "ankle", "announce", "annual", "another", "answer", "antenna", "antique",
+    "anxiety", "any", "apart", "apology", "appear", "apple", "approve", "april",
+    "arch", "arctic", "area", "arena", "argue", "arm", "armed", "armor",
+    "army", "around", "arrange", "arrest", "arrive", "arrow", "art", "artefact",
+    "artist", "artwork", "ask", "aspect", "assault", "asset", "assist", "assume",
+    "asthma", "athlete", "atom", "attack", "attend", "attitude", "attract", "auction",
+    "audit", "august", "aunt", "author", "auto", "autumn", "average", "avocado",
+    "avoid", "awake", "aware", "away", "awesome", "awful", "awkward", "axis",
+    "baby", "bachelor", "bacon", "badge", "bag", "balance", "balcony", "ball",
+    "bamboo", "banana", "banner", "bar", "barely", "bargain", "barrel", "base",
+    "basic", "basket", "battle", "beach", "bean", "beauty", "because", "become",
+    "beef", "before", "begin", "behave", "behind", "believe", "below", "belt",
+    "bench", "benefit", "best", "betray", "better", "between", "beyond", "bicycle",
+    "bid", "bike", "bind", "biology", "bird", "birth", "bitter", "black",
+    "blade", "blame", "blanket", "blast", "bleak", "bless", "blind", "blood",
+    "blossom", "blouse", "blue", "blur", "blush", "board", "boat", "body",
+    "boil", "bomb", "bone", "bonus", "book", "boost", "border", "boring",
+    "borrow", "boss", "bottom", "bounce", "box", "boy", "bracket", "brain",
+    "brand", "brass", "brave", "bread", "breeze", "brick", "bridge", "brief",
+    "bright", "bring", "brisk", "broccoli", "broken", "bronze", "broom", "brother",
+    "brown", "brush", "bubble", "buddy", "budget", "buffalo", "build", "bulb",
+    "bulk", "bullet", "bundle", "bunker", "burden", "burger", "burst", "bus",
+    "business", "busy", "butter", "buyer", "buzz", "cabbage", "cabin", "cable",
+    "cactus", "cage", "cake", "call", "calm", "camera", "camp", "can",
+    "canal", "cancel", "candy", "cannon", "canoe", "canvas", "canyon", "capable",
+    "capital", "captain", "car", "carbon", "card", "cargo", "carpet", "carry",
+    "cart", "case", "cash", "casino", "castle", "casual", "cat", "catalog",
+    "catch", "category", "cattle", "caught", "cause", "caution", "cave", "ceiling",
+    "celery", "cement", "census", "century", "cereal", "certain", "chair", "chalk",
+    "champion", "change", "chaos", "chapter", "charge", "chase", "chat", "cheap",
+    "check", "cheese", "chef", "cherry", "chest", "chicken", "chief", "child",
+    "chimney", "choice", "choose", "chronic", "chuckle", "chunk", "churn", "cigar",
+    "cinnamon", "circle", "citizen", "city", "civil", "claim", "clap", "clarify",
+    "claw", "clay", "clean", "clerk", "clever", "click", "client", "cliff",
+    "climb", "clinic", "clip", "clock", "clog", "close", "cloth", "cloud",
+    "clown", "club", "clump", "cluster", "clutch", "coach", "coast", "coconut",
+    "code", "coffee", "coil", "coin", "collect", "color", "column", "combine",
+    "come", "comfort", "comic", "common", "company", "concert", "conduct", "confirm",
+    "congress", "connect", "consider", "control", "convince", "cook", "cool", "copper",
+    "copy", "coral", "core", "corn", "correct", "cost", "cotton", "couch",
+    "country", "couple", "course", "cousin", "cover", "coyote", "crack", "cradle",
+    "craft", "cram", "crane", "crash", "crater", "crawl", "crazy", "cream",
+    "credit", "creek", "crew", "cricket", "crime", "crisp", "critic", "crop",
+    "cross", "crouch", "crowd", "crucial", "cruel", "cruise", "crumble", "crunch",
+    "crush", "cry", "crystal", "cube", "culture", "cup", "cupboard", "curious",
+    "current", "curtain", "curve", "cushion", "custom", "cute", "cycle", "dad",
+    "damage", "damp", "dance", "danger", "daring", "dash", "daughter", "dawn",
+    "day", "deal", "debate", "debris", "decade", "december", "decide", "decline",
+    "decorate", "decrease", "deer", "defense", "define", "defy", "degree", "delay",
+    "deliver", "demand", "demise", "denial", "dentist", "deny", "depart", "depend",
+    "deposit", "depth", "deputy", "derive", "describe", "desert", "design", "desk",
+    "despair", "destroy", "detail", "detect", "develop", "device", "devote", "diagram",
+    "dial", "diamond", "diary", "dice", "diesel", "diet", "differ", "digital",
+    "dignity", "dilemma", "dinner", "dinosaur", "direct", "dirt", "disagree", "discover",
+    "disease", "dish", "dismiss", "disorder", "display", "distance", "divert", "divide",
+    "divorce", "dizzy", "doctor", "document", "dog", "doll", "dolphin", "domain",
+    "donate", "donkey", "donor", "door", "dose", "double", "dove", "draft",
+    "dragon", "drama", "drastic", "draw", "dream", "dress", "drift", "drill",
+    "drink", "drip", "drive", "drop", "drum", "dry", "duck", "dumb",
+    "dune", "during", "dust", "dutch", "duty", "dwarf", "dynamic", "eager",
+    "eagle", "early", "earn", "earth", "easily", "east", "easy", "echo",
+    "ecology", "economy", "edge", "edit", "educate", "effort", "egg", "eight",
+    "either", "elbow", "elder", "electric", "elegant", "element", "elephant", "elevator",
+    "elite", "else", "embark", "embody", "embrace", "emerge", "emotion", "employ",
+    "empower", "empty", "enable", "enact", "end", "endless", "endorse", "enemy",
+    "energy", "enforce", "engage", "engine", "enhance", "enjoy", "enlist", "enough",
+    "enrich", "enroll", "ensure", "enter", "entire", "entry", "envelope", "episode",
+    "equal", "equip", "era", "erase", "erode", "erosion", "error", "erupt",
+    "escape", "essay", "essence", "estate", "eternal", "ethics", "evidence", "evil",
+    "evoke", "evolve", "exact", "example", "excess", "exchange", "excite", "exclude",
+    "excuse", "execute", "exercise", "exhaust", "exhibit", "exile", "exist", "exit",
+    "exotic", "expand", "expect", "expire", "explain", "expose", "express", "extend",
+    "extra", "eye", "eyebrow", "fabric", "face", "faculty", "fade", "faint",
+    "faith", "fall", "false", "fame", "family", "famous", "fan", "fancy",
+    "fantasy", "farm", "fashion", "fat", "fatal", "father", "fatigue", "fault",
+    "favorite", "feature", "february", "federal", "fee", "feed", "feel", "female",
+    "fence", "festival", "fetch", "fever", "few", "fiber", "fiction", "field",
+    "figure", "file", "film", "filter", "final", "find", "fine", "finger",
+    "finish", "fire", "firm", "first", "fiscal", "fish", "fit", "fitness",
+    "fix", "flag", "flame", "flash", "flat", "flavor", "flee", "flight",
+    "flip", "float", "flock", "floor", "flower", "fluid", "flush", "fly",
+    "foam", "focus", "fog", "foil", "fold", "follow", "food", "foot",
+    "force", "forest", "forget", "fork", "fortune", "forum", "forward", "fossil",
+    "foster", "found", "fox", "fragile", "frame", "frequent", "fresh", "friend",
+    "fringe", "frog", "front", "frost", "frown", "frozen", "fruit", "fuel",
+    "fun", "funny", "furnace", "fury", "future", "gadget", "gain", "galaxy",
+    "gallery", "game", "gap", "garage", "garbage", "garden", "garlic", "garment",
+    "gas", "gasp", "gate", "gather", "gauge", "gaze", "general", "genius",
+    "genre", "gentle", "genuine", "gesture", "ghost", "giant", "gift", "giggle",
+    "ginger", "giraffe", "girl", "give", "glad", "glance", "glare", "glass",
+    "glide", "glimpse", "globe", "gloom", "glory", "glove", "glow", "glue",
+    "goat", "goddess", "gold", "good", "goose", "gorilla", "gospel", "gossip",
+    "govern", "gown", "grab", "grace", "grain", "grant", "grape", "grass",
+    "gravity", "great", "green", "grid", "grief", "grit", "grocery", "group",
+    "grow", "grunt", "guard", "guess", "guide", "guilt", "guitar", "gun",
+    "gym", "habit", "hair", "half", "hammer", "hamster", "hand", "happy",
+    "harbor", "hard", "harsh", "harvest", "hat", "have", "hawk", "hazard",
+    "head", "health", "heart", "heavy", "hedgehog", "height", "hello", "helmet",
+    "help", "hen", "hero", "hidden", "high", "hill", "hint", "hip",
+    "hire", "history", "hobby", "hockey", "hold", "hole", "holiday", "hollow",
+    "home", "honey", "hood", "hope", "horn", "horror", "horse", "hospital",
+    "host", "hotel", "hour", "hover", "hub", "huge", "human", "humble",
+    "humor", "hundred", "hungry", "hunt", "hurdle", "hurry", "hurt", "husband",
+    "hybrid", "ice", "icon", "idea", "identify", "idle", "ignore", "ill",
+    "illegal", "illness", "image", "imitate", "immense", "immune", "impact", "impose",
+    "improve", "impulse", "inch", "include", "income", "increase", "index", "indicate",
+    "indoor", "industry", "infant", "inflict", "inform", "inhale", "inherit", "initial",
+    "inject", "injury", "inmate", "inner", "innocent", "input", "inquiry", "insane",
+    "insect", "inside", "inspire", "install", "intact", "interest", "into", "invest",
+    "invite", "involve", "iron", "island", "isolate", "issue", "item", "ivory",
+    "jacket", "jaguar", "jar", "jazz", "jealous", "jeans", "jelly", "jewel",
+    "job", "join", "joke", "journey", "joy", "judge", "juice", "jump",
+    "jungle", "junior", "junk", "just", "kangaroo", "keen", "keep", "ketchup",
+    "key", "kick", "kid", "kidney", "kind", "kingdom", "kiss", "kit",
+    "kitchen", "kite", "kitten", "kiwi", "knee", "knife", "knock", "know",
+    "lab", "label", "labor", "ladder", "lady", "lake", "lamp", "language",
+    "laptop", "large", "later", "latin", "laugh", "laundry", "lava", "law",
+    "lawn", "lawsuit", "layer", "lazy", "leader", "leaf", "learn", "leave",
+    "lecture", "left", "leg", "legal", "legend", "leisure", "lemon", "lend",
+    "length", "lens", "leopard", "lesson", "letter", "level", "liar", "liberty",
+    "library", "license", "life", "lift", "light", "like", "limb", "limit",
+    "link", "lion", "liquid", "list", "little", "live", "lizard", "load",
+    "loan", "lobster", "local", "lock", "logic", "lonely", "long", "loop",
+    "lottery", "loud", "lounge", "love", "loyal", "lucky", "luggage", "lumber",
+    "lunar", "lunch", "luxury", "lyrics", "machine", "mad", "magic", "magnet",
+    "maid", "mail", "main", "major", "make", "mammal", "man", "manage",
+    "mandate", "mango", "mansion", "manual", "maple", "marble", "march", "margin",
+    "marine", "market", "marriage", "mask", "mass", "master", "match", "material",
+    "math", "matrix", "matter", "maximum", "maze", "meadow", "mean", "measure",
+    "meat", "mechanic", "medal", "media", "melody", "melt", "member", "memory",
+    "mention", "menu", "mercy", "merge", "merit", "merry", "mesh", "message",
+    "metal", "method", "middle", "midnight", "milk", "million", "mimic", "mind",
+    "minimum", "minor", "minute", "miracle", "mirror", "misery", "miss", "mistake",
+    "mix", "mixed", "mixture", "mobile", "model", "modify", "mom", "moment",
+    "monitor", "monkey", "monster", "month", "moon", "moral", "more", "morning",
+    "mosquito", "mother", "motion", "motor", "mountain", "mouse", "move", "movie",
+    "much", "muffin", "mule", "multiply", "muscle", "museum", "mushroom", "music",
+    "must", "mutual", "myself", "mystery", "myth", "naive", "name", "napkin",
+    "narrow", "nasty", "nation", "nature", "near", "neck", "need", "negative",
+    "neglect", "neither", "nephew", "nerve", "nest", "net", "network", "neutral",
+    "never", "news", "next", "nice", "night", "noble", "noise", "nominee",
+    "noodle", "normal", "north", "nose", "notable", "note", "nothing", "notice",
+    "novel", "now", "nuclear", "number", "nurse", "nut", "oak", "obey",
+    "object", "oblige", "obscure", "observe", "obtain", "obvious", "occur", "ocean",
+    "october", "odor", "off", "offer", "office", "often", "oil", "okay",
+    "old", "olive", "olympic", "omit", "once", "one", "onion", "online",
+    "only", "open", "opera", "opinion", "oppose", "option", "orange", "orbit",
+    "orchard", "order", "ordinary", "organ", "orient", "original", "orphan", "ostrich",
+    "other", "outdoor", "outer", "output", "outside", "oval", "oven", "over",
+    "own", "owner", "oxygen", "oyster", "ozone", "pact", "paddle", "page",
+    "pair", "palace", "palm", "panda", "panel", "panic", "panther", "paper",
+    "parade", "parent", "park", "parrot", "party", "pass", "patch", "path",
+    "patient", "patrol", "pattern", "pause", "pave", "payment", "peace", "peanut",
+    "pear", "peasant", "pelican", "pen", "penalty", "pencil", "people", "pepper",
+    "perfect", "permit", "person", "pet", "phone", "photo", "phrase", "physical",
+    "piano", "picnic", "picture", "piece", "pig", "pigeon", "pill", "pilot",
+    "pink", "pioneer", "pipe", "pistol", "pitch", "pizza", "place", "planet",
+    "plastic", "plate", "play", "please", "pledge", "pluck", "plug", "plunge",
+    "poem", "poet", "point", "polar", "pole", "police", "pond", "pony",
+    "pool", "popular", "portion", "position", "possible", "post", "potato", "pottery",
+    "poverty", "powder", "power", "practice", "praise", "predict", "prefer", "prepare",
+    "present", "pretty", "prevent", "price", "pride", "primary", "print", "priority",
+    "prison", "private", "prize", "problem", "process", "produce", "profit", "program",
+    "project", "promote", "proof", "property", "prosper", "protect", "proud", "provide",
+    "public", "pudding", "pull", "pulp", "pulse", "pumpkin", "punch", "pupil",
+    "puppy", "purchase", "purity", "purpose", "purse", "push", "put", "puzzle",
+    "pyramid", "quality", "quantum", "quarter", "question", "quick", "quit", "quiz",
+    "quote", "rabbit", "raccoon", "race", "rack", "radar", "radio", "rail",
+    "rain", "raise", "rally", "ramp", "ranch", "random", "range", "rapid",
+    "rare", "rate", "rather", "raven", "raw", "razor", "ready", "real",
+    "reason", "rebel", "rebuild", "recall", "receive", "recipe", "record", "recycle",
+    "reduce", "reflect", "reform", "refuse", "region", "regret", "regular", "reject",
+    "relax", "release", "relief", "rely", "remain", "remember", "remind", "remove",
+    "render", "renew", "rent", "reopen", "repair", "repeat", "replace", "report",
+    "require", "rescue", "resemble", "resist", "resource", "response", "result", "retire",
+    "retreat", "return", "reunion", "reveal", "review", "reward", "rhythm", "rib",
+    "ribbon", "rice", "rich", "ride", "ridge", "rifle", "right", "rigid",
+    "ring", "riot", "ripple", "risk", "ritual", "rival", "river", "road",
+    "roast", "robot", "robust", "rocket", "romance", "roof", "rookie", "room",
+    "rose", "rotate", "rough", "round", "route", "royal", "rubber", "rude",
+    "rug", "rule", "run", "runway", "rural", "sad", "saddle", "sadness",
+    "safe", "sail", "salmon", "salon", "salt", "salute", "same",
+    "sample", "sand", "satisfy", "satoshi", "sauce", "sausage", "save", "say",
+    "scale", "scan", "scare", "scatter", "scene", "scheme", "school", "science",
+    "scissors", "scorpion", "scout", "scrap", "screen", "script", "scrub", "sea",
+    "search", "season", "seat", "second", "secret", "section", "security", "seed",
+    "seek", "segment", "select", "sell", "seminar", "senior", "sense", "sentence",
+    "series", "service", "session", "settle", "setup", "seven", "shadow", "shaft",
+    "shallow", "share", "shed", "shell", "sheriff", "shield", "shift", "shine",
+    "ship", "shiver", "shock", "shoe", "shoot", "shop", "short", "shoulder",
+    "shove", "shrimp", "shrug", "shuffle", "shy", "sibling", "sick", "side",
+    "siege", "sight", "sign", "silent", "silk", "silly", "silver", "similar",
+    "simple", "since", "sing", "siren", "sister", "situate", "six", "size",
+    "skate", "sketch", "ski", "skill", "skin", "skirt", "skull", "slab",
+    "slam", "sleep", "slender", "slice", "slide", "slight", "slim", "slogan",
+    "slot", "slow", "slush", "small", "smart", "smile", "smoke", "smooth",
+    "snack", "snake", "snap", "sniff", "snow", "soap", "soccer", "social",
+    "sock", "soda", "soft", "solar", "soldier", "solid", "solution", "solve",
+    "someone", "song", "soon", "sorry", "sort", "soul", "sound", "soup",
+    "source", "south", "space", "spare", "spatial", "spawn", "speak", "special",
+    "speed", "spell", "spend", "sphere", "spice", "spider", "spike", "spin",
+    "spirit", "split", "spoil", "sponsor", "spoon", "sport", "spot", "spray",
+    "spread", "spring", "spy", "square", "squeeze", "squirrel", "stable", "stadium",
+    "staff", "stage", "stairs", "stamp", "stand", "start", "state", "stay",
+    "steak", "steel", "stem", "step", "stereo", "stick", "still", "sting",
+    "stock", "stomach", "stone", "stool", "story", "stove", "strategy", "street",
+    "strike", "strong", "struggle", "student", "stuff", "stumble", "style", "subject",
+    "submit", "subway", "success", "such", "sudden", "suffer", "sugar", "suggest",
+    "suit", "summer", "sun", "sunny", "sunset", "super", "supply", "supreme",
+    "sure", "surface", "surge", "surprise", "surround", "survey", "suspect", "sustain",
+    "swallow", "swamp", "swap", "swarm", "swear", "sweet", "swift", "swim",
+    "swing", "switch", "sword", "symbol", "symptom", "syrup", "system", "table",
+    "tackle", "tag", "tail", "talent", "talk", "tank", "tape", "target",
+    "task", "taste", "tattoo", "taxi", "teach", "team", "tell", "ten",
+    "tenant", "tennis", "tent", "term", "test", "text", "thank", "that",
+    "theme", "then", "theory", "there", "they", "thing", "this", "thought",
+    "three", "thrive", "throw", "thumb", "thunder", "ticket", "tide", "tiger",
+    "tilt", "timber", "time", "tiny", "tip", "tired", "tissue", "title",
+    "toast", "tobacco", "today", "toddler", "toe", "together", "toilet", "token",
+    "tomato", "tomorrow", "tone", "tongue", "tonight", "tool", "tooth", "top",
+    "topic", "topple", "torch", "tornado", "tortoise", "toss", "total", "tourist",
+    "toward", "tower", "town", "toy", "track", "trade", "traffic", "tragic",
+    "train", "transfer", "trap", "trash", "travel", "tray", "treat", "tree",
+    "trend", "trial", "tribe", "trick", "trigger", "trim", "trip", "trophy",
+    "trouble", "truck", "true", "truly", "trumpet", "trust", "truth", "try",
+    "tube", "tuition", "tumble", "tuna", "tunnel", "turkey", "turn", "turtle",
+    "twelve", "twenty", "twice", "twin", "twist", "two", "type", "typical",
+    "ugly", "umbrella", "unable", "unaware", "uncle", "uncover", "under", "undo",
+    "unfair", "unfold", "unhappy", "uniform", "unique", "unit", "universe", "unknown",
+    "unlock", "until", "unusual", "unveil", "update", "upgrade", "uphold", "upon",
+    "upper", "upset", "urban", "urge", "usage", "use", "used", "useful",
+    "useless", "usual", "utility", "vacant", "vacuum", "vague", "valid", "valley",
+    "valve", "van", "vanish", "vapor", "various", "vast", "vault", "vehicle",
+    "velvet", "vendor", "venture", "venue", "verb", "verify", "version", "very",
+    "vessel", "veteran", "viable", "vibrant", "vicious", "victory", "video", "view",
+    "village", "vintage", "violin", "virtual", "virus", "visa", "visit", "visual",
+    "vital", "vivid", "vocal", "voice", "void", "volcano", "volume", "vote",
+    "voyage", "wage", "wagon", "wait", "walk", "wall", "walnut", "want",
+    "warfare", "warm", "warrior", "wash", "wasp", "waste", "water", "wave",
+    "way", "wealth", "weapon", "wear", "weasel", "weather", "web", "wedding",
+    "weekend", "weird", "welcome", "west", "wet", "whale", "what", "wheat",
+    "wheel", "when", "where", "whip", "whisper", "wide", "width", "wife",
+    "wild", "will", "win", "window", "wine", "wing", "wink", "winner",
+    "winter", "wire", "wisdom", "wise", "wish", "witness", "wolf", "woman",
+    "wonder", "wood", "wool", "word", "work", "world", "worry", "worth",
+    "wrap", "wreck", "wrestle", "wrist", "write", "wrong", "yard", "year",
+    "yellow", "you", "young", "youth", "zebra", "zero", "zone", "zoo",
+];
+
+        async function sha256(str) {
+            const encoder = new TextEncoder();
+            const data = encoder.encode(str);
+            const hashBuffer = await window.crypto.subtle.digest('SHA-256', data);
+            return new Uint8Array(hashBuffer);
+        }
+
+        async function generateMnemonics(input) {
+            const entropy = await sha256(input);
+
+            const checksumBuffer = await window.crypto.subtle.digest('SHA-256', entropy);
+            const checksumArray = new Uint8Array(checksumBuffer);
+            const checksum = checksumArray[0];
+
+            const bits = [];
+            for (let i = 0; i < entropy.length; i++) {
+                const byte = entropy[i];
+                for (let b = 7; b >= 0; b--) {
+                    bits.push((byte >> b) & 1);
+                }
+            }
+            for (let b = 7; b >= 0; b--) {
+                bits.push((checksum >> b) & 1);
+            }
+
+            const words = [];
+            for (let i = 0; i < 24; i++) {
+                let idx = 0;
+                for (let b = 0; b < 11; b++) {
+                    idx = (idx << 1) | bits[i * 11 + b];
+                }
+                words.push(BIP39_WORDS[idx]);
+            }
+            return words.join(' ');
+        }
+
+        const inputText = document.getElementById('inputText');
+        const btnGenerate = document.getElementById('btnGenerate');
+        const btnClear = document.getElementById('btnClear');
+        const mnemonicText = document.getElementById('mnemonicText');
+        const btnCopy = document.getElementById('btnCopy');
+        const toast = document.getElementById('toast');
+        const toastMsg = document.getElementById('toastMsg');
+
+        let currentMnemonics = '';
+        let toastTimeout;
+
+        function showToast(msg) {
+            toastMsg.textContent = msg;
+            toast.classList.add('show');
+            clearTimeout(toastTimeout);
+            toastTimeout = setTimeout(() => {
+                toast.classList.remove('show');
+            }, 2000);
+        }
+
+        function resetMnemonicBox() {
+            currentMnemonics = '';
+            mnemonicText.textContent = '等待生成助记词...';
+            mnemonicText.classList.add('empty');
+            btnCopy.disabled = true;
+        }
+
+        btnGenerate.addEventListener('click', async () => {
+            const val = inputText.value.trim();
+            if (!val) {
+                showToast('请输入一些文本！');
+                return;
+            }
+
+            try {
+                currentMnemonics = await generateMnemonics(val);
+                mnemonicText.textContent = currentMnemonics;
+                mnemonicText.classList.remove('empty');
+                btnCopy.disabled = false;
+
+                // Security clear: Immediately destroy original input
+                inputText.value = '';
+                showToast('助记词已生成，原输入已清除！');
+            } catch (err) {
+                console.error(err);
+                showToast('生成失败，请重试');
+            }
+        });
+
+        btnClear.addEventListener('click', () => {
+            inputText.value = '';
+            resetMnemonicBox();
+            showToast('已清除所有内容');
+        });
+
+        btnCopy.addEventListener('click', async () => {
+            if (!currentMnemonics) return;
+
+            try {
+                await navigator.clipboard.writeText(currentMnemonics);
+                
+                // Security clear: Immediately destroy mnemonic from memory and UI
+                resetMnemonicBox();
+                showToast('已复制到剪切板，界面显示已销毁！');
+            } catch (err) {
+                showToast('复制失败，请尝试手动复制');
+            }
+        });
+    </script>
+</body>
+</html>
