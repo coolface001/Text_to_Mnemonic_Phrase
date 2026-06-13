@@ -1,4 +1,4 @@
-# 极简安全助记词生成器 (Minimalist Secure Mnemonic Generator)
+# 助记词生成器 (Minimalist Secure Mnemonic Generator)
 
 輸入任意的詞彙 詩句 或者是任何記憶中的東西 可長可短 不限制輸入內容  它將幫你轉換成英文的24組助記詞 
 便於創造錢包以及記憶資產
